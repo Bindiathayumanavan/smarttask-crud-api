@@ -2,6 +2,7 @@ package com.smarttask.backend.controller;
 
 import com.smarttask.backend.model.User;
 import com.smarttask.backend.repository.UserRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,35 +16,37 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    // Health check
+    // Health check endpoint
     @GetMapping("/ping")
     public String ping() {
         return "pong";
     }
 
-    // Get all users
+    // Fetch all users
     @GetMapping
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return ResponseEntity.ok(users);
     }
 
     // Create a new user
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userRepository.save(user);
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
     }
 
-    // Get user by ID
+    // Fetch a user by ID
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userRepository.findById(id)
-                .map(user -> ResponseEntity.ok().body(user))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Update a user
+    // Update an existing user
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User userDetails) {
         return userRepository.findById(id)
                 .map(user -> {
                     user.setName(userDetails.getName());
@@ -54,13 +57,13 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Delete a user
+    // Delete a user by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         return userRepository.findById(id)
                 .map(user -> {
                     userRepository.delete(user);
-                    return ResponseEntity.noContent().<Void>build();
+                    return ResponseEntity.noContent().<Void>build();  // FIXED LINE
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
